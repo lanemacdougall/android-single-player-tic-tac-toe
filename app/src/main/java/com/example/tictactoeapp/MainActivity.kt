@@ -17,7 +17,6 @@ class MainActivity : AppCompatActivity() {
      */
     private var boardRepresent = arrayOf<Array<Int>>()
 
-    // Player one starts the game
     private var playerOneTurn = true
 
     private var round = 0
@@ -45,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         initializeBoardRep()
     }
 
-
+    // Initialize board representation with zeros to represent empty spaces
     private fun initializeBoardRep(){
         for (i in 0..2){
             var array = arrayOf<Int>()
@@ -56,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Reset board representation after game
     private fun resetBoardRep(){
         for (i in 0..2){
             for (j in 0..2){
@@ -103,22 +103,8 @@ class MainActivity : AppCompatActivity() {
 
         selectButton.isEnabled = false
 
-        if (checkForWin()){
-            if (playerOneTurn) {
-                playerOnePoints++
-                Toast.makeText(this, "PLAYER ONE WINS!", Toast.LENGTH_SHORT).show()
-            }
-            else {
-                playerTwoPoints++
-                Toast.makeText(this, "PLAYER TWO WINS!", Toast.LENGTH_SHORT).show()
-            }
-            updatePointsText()
-            disableTiles()
-        } else if (round == 9) {
-            Toast.makeText(this, "DRAW...", Toast.LENGTH_SHORT).show()
-            disableTiles()
-        }
-        else {
+        var winStatus: Int? = checkForWin()
+        if (winStatus == null){
             if (playerOneTurn){
                 textViewPlayer1.setTextColor(Color.BLACK)
                 textViewPlayer2.setTextColor(Color.CYAN)
@@ -126,59 +112,29 @@ class MainActivity : AppCompatActivity() {
                 textViewPlayer1.setTextColor(Color.GREEN)
                 textViewPlayer2.setTextColor(Color.BLACK)
             }
-
             playerOneTurn = !playerOneTurn
+        } else if (winStatus == 1) {
+            playerOnePoints++
+            Toast.makeText(this, "PLAYER ONE WINS!", Toast.LENGTH_SHORT).show()
+            updatePointsText()
+            disableTiles()
+        } else if (winStatus == -1){
+            playerTwoPoints++
+            Toast.makeText(this, "PLAYER TWO WINS!", Toast.LENGTH_SHORT).show()
+            updatePointsText()
+            disableTiles()
+        } else if (winStatus == 0) {
+            Toast.makeText(this, "DRAW...", Toast.LENGTH_SHORT).show()
+            disableTiles()
         }
 
     }
 
 
-    /*private fun claimSpot(cellID: IntArray, selectButton: Button){
-
-        if (playerOneTurn){
-            selectButton.text = "X"
-            selectButton.setBackgroundColor(Color.GREEN)
-            val xCoord = cellID[0]
-            val yCoord = cellID[1]
-            boardRepresent[xCoord][yCoord] = 1
-            //playerOneTurn = false
-        } else {
-            selectButton.text = "O"
-            selectButton.setBackgroundColor(Color.GRAY)
-            val xCoord = cellID[0]
-            val yCoord = cellID[1]
-            boardRepresent[xCoord][yCoord] = 2
-            //playerOneTurn = true
-        }
-
-        round++
-
-        selectButton.isEnabled = false
-
-        if (checkForWin()){
-            if (playerOneTurn) {
-                playerOnePoints++
-                Toast.makeText(this, "PLAYER ONE WINS!", Toast.LENGTH_SHORT).show()
-            }
-            else {
-                playerTwoPoints++
-                Toast.makeText(this, "PLAYER TWO WINS!", Toast.LENGTH_SHORT).show()
-            }
-            updatePointsText()
-            resetBoard()
-        } else if (round == 9) {
-            Toast.makeText(this, "DRAW...", Toast.LENGTH_SHORT)
-            resetBoard()
-        }
-        else
-            playerOneTurn = !playerOneTurn
-
-    }*/
-
-
-    private fun checkForWin(): Boolean {
+    private fun checkForWin(): Int? {
 
         var gameWon = false
+        var winStatus: Int? = null
 
         var i = 0
         while (i < 3){
@@ -215,32 +171,96 @@ class MainActivity : AppCompatActivity() {
             gameWon = true
         }
 
-        return gameWon
+        if (gameWon && playerOneTurn){
+            winStatus = 1
+        } else if (gameWon && !playerOneTurn){
+            winStatus = -1
+        } else if (!gameWon && round == 9){
+            winStatus = 0
+        }
+
+        return winStatus
     }
 
-
-    /*private fun playerOneWins() {
-        playerOnePoints++
-        Toast.makeText(this, "PLAYER ONE WINS!", Toast.LENGTH_SHORT).show()
-        //updatePointsText()
-        resetBoard()
+    private fun minimax(boardRep: Array<Array<Int>>, depth: Int, maximizingPlayer: Boolean): Int{
+        var winStatus = checkForWin()
+        if (winStatus != null){
+            return winStatus
+        } else if (maximizingPlayer){
+            var bestScore = Int.MIN_VALUE
+            for (i in 0..2){
+                for (j in 0..2){
+                    if (boardRep[i][j] == 0){
+                        boardRep[i][j] = 1
+                        var score = minimax(boardRep, depth+1, false)
+                        boardRep[i][j] = 0
+                        bestScore = Math.max(score, bestScore)
+                    }
+                }
+            }
+            return bestScore
+        } else {
+            // AI is the minimizing player
+            var bestScore = Int.MAX_VALUE
+            for (i in 0..2){
+                for (j in 0..2){
+                    if (boardRep[i][j] == 0){
+                        boardRep[i][j] = 2
+                        var score = minimax(boardRep, depth+1, true)
+                        boardRep[i][j] = 0
+                        bestScore = Math.min(score, bestScore)
+                    }
+                }
+            }
+            return bestScore
+        }
     }
 
+    private fun aiMove(){
+        var bestScore = Int.MAX_VALUE
+        var bestMove: IntArray = intArrayOf(0, 0)
+        var copyBoardRep = boardRepresent.copyOf()
+        for (i in 0..2){
+            for (j in 0..2){
+                if (copyBoardRep[i][j] == 0){
+                    copyBoardRep[i][j] = 2
+                    var score = minimax(copyBoardRep, 0, true)
+                    copyBoardRep[i][j] = 0
+                    if (score < bestScore){
+                        bestScore = score
+                        bestMove[0] = i
+                        bestMove[1] = j
+                    }
+                }
+            }
+        }
+        boardRepresent[bestMove[0]][bestMove[1]] = 2
+        var button: Button? = null
+        if (bestMove[0] == 0 && bestMove[1] == 0){
+            button = findViewById(R.id.button0)
+        } else if (bestMove[0] == 0 && bestMove[1] == 1) {
+            button = findViewById(R.id.button1)
+        } else if (bestMove[0] == 0 && bestMove[1] == 2) {
+            button = findViewById(R.id.button2)
+        } else if (bestMove[0] == 1 && bestMove[1] == 0) {
+            button = findViewById(R.id.button3)
+        } else if (bestMove[0] == 1 && bestMove[1] == 1) {
+            button = findViewById(R.id.button4)
+        } else if (bestMove[0] == 1 && bestMove[1] == 2) {
+            button = findViewById(R.id.button5)
+        } else if (bestMove[0] == 2 && bestMove[1] == 0) {
+            button = findViewById(R.id.button6)
+        } else if (bestMove[0] == 2 && bestMove[1] == 1) {
+            button = findViewById(R.id.button7)
+        } else if (bestMove[0] == 2 && bestMove[1] == 2) {
+            button = findViewById(R.id.button8)
+        }
 
-    private fun playerTwoWins() {
-        playerTwoPoints++
-        Toast.makeText(this, "PLAYER TWO WINS!", Toast.LENGTH_SHORT).show()
-        //updatePointsText()
-        resetBoard()
+        button?.text = "O"
+        button?.setBackgroundColor(Color.CYAN)
+
+
     }
-
-
-    private fun draw() {
-        Toast.makeText(this, "DRAW...", Toast.LENGTH_SHORT)
-        resetBoard()
-    }
-    
-     */
 
 
     @SuppressLint("SetTextI18n")
