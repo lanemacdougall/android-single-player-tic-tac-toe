@@ -66,91 +66,88 @@ class MainActivity : AppCompatActivity() {
 
 
     fun buttonClick(view: View){
+        if (playerOneTurn) {
+            val selectButton = view as Button
+            var cellID = IntArray(2)
+            when (selectButton.id) {
+                R.id.button0 -> {
+                    cellID[0] = 0; cellID[1] = 0
+                }
+                R.id.button1 -> {
+                    cellID[0] = 0; cellID[1] = 1
+                }
+                R.id.button2 -> {
+                    cellID[0] = 0; cellID[1] = 2
+                }
+                R.id.button3 -> {
+                    cellID[0] = 1; cellID[1] = 0
+                }
+                R.id.button4 -> {
+                    cellID[0] = 1; cellID[1] = 1
+                }
+                R.id.button5 -> {
+                    cellID[0] = 1; cellID[1] = 2
+                }
+                R.id.button6 -> {
+                    cellID[0] = 2; cellID[1] = 0
+                }
+                R.id.button7 -> {
+                    cellID[0] = 2; cellID[1] = 1
+                }
+                R.id.button8 -> {
+                    cellID[0] = 2; cellID[1] = 2
+                }
+            }
 
-        val selectButton = view as Button
-        var cellID = IntArray(2)
-        when (selectButton.id){
-            R.id.button0 -> { cellID[0] = 0 ; cellID[1] = 0 }
-            R.id.button1 -> { cellID[0] = 0 ; cellID[1] = 1 }
-            R.id.button2 -> { cellID[0] = 0 ; cellID[1] = 2 }
-            R.id.button3 -> { cellID[0] = 1 ; cellID[1] = 0 }
-            R.id.button4 -> { cellID[0] = 1 ; cellID[1] = 1 }
-            R.id.button5 -> { cellID[0] = 1 ; cellID[1] = 2 }
-            R.id.button6 -> { cellID[0] = 2 ; cellID[1] = 0 }
-            R.id.button7 -> { cellID[0] = 2 ; cellID[1] = 1 }
-            R.id.button8 -> { cellID[0] = 2 ; cellID[1] = 2 }
-        }
-
-        //Toast.makeText(this, "Button ID: $cellID", Toast.LENGTH_SHORT).show()
-
-        //claimSpot(cellID = cellID, selectButton = selectButton)
-
-        if (playerOneTurn){
             selectButton.text = "X"
             selectButton.setBackgroundColor(Color.GREEN)
+            selectButton.isEnabled = false
             val xCoord = cellID[0]
             val yCoord = cellID[1]
             boardRepresent[xCoord][yCoord] = 1
-        } else {
-            selectButton.text = "O"
-            selectButton.setBackgroundColor(Color.CYAN)
-            val xCoord = cellID[0]
-            val yCoord = cellID[1]
-            boardRepresent[xCoord][yCoord] = 2
-        }
-
-        round++
-
-        selectButton.isEnabled = false
-
-        var winStatus: Int? = checkForWin()
-        if (winStatus == null){
-            if (playerOneTurn){
-                textViewPlayer1.setTextColor(Color.BLACK)
-                textViewPlayer2.setTextColor(Color.CYAN)
-            } else {
-                textViewPlayer1.setTextColor(Color.GREEN)
-                textViewPlayer2.setTextColor(Color.BLACK)
+            round++
+            var gameStatus = postMoveActions()
+            if (gameStatus == null && round < 9) {
+                playerOneTurn = false
+                aiMove()
+                round++
+                postMoveActions()
+                playerOneTurn = true
             }
-            playerOneTurn = !playerOneTurn
-        } else if (winStatus == 1) {
-            playerOnePoints++
-            Toast.makeText(this, "PLAYER ONE WINS!", Toast.LENGTH_SHORT).show()
-            updatePointsText()
-            disableTiles()
-        } else if (winStatus == -1){
-            playerTwoPoints++
-            Toast.makeText(this, "PLAYER TWO WINS!", Toast.LENGTH_SHORT).show()
-            updatePointsText()
-            disableTiles()
-        } else if (winStatus == 0) {
-            Toast.makeText(this, "DRAW...", Toast.LENGTH_SHORT).show()
-            disableTiles()
         }
-
     }
 
 
-    private fun checkForWin(): Int? {
+    private fun checkForWin(): Double? {
 
-        var gameWon = false
-        var winStatus: Int? = null
-
+        var winner: Int? = null
+        var winStatus: Double? = null
         var i = 0
+
+        var openSpacesCount = 0
+
+        for (i in 0..2){
+            for (j in 0..2){
+                if (boardRepresent[i][j] == 0){
+                    openSpacesCount++
+                }
+            }
+        }
+
         while (i < 3){
             // Check rows for win
             if (boardRepresent[i][0] == boardRepresent[i][1] &&
                 boardRepresent[i][0] == boardRepresent[i][2] &&
                 boardRepresent[i][0] != 0
             ) {
-                gameWon = true
+                winner = boardRepresent[i][0]
             }
             //  Check columns for win
             if (boardRepresent[0][i] == boardRepresent[1][i] &&
                 boardRepresent[0][i] == boardRepresent[2][i] &&
                 boardRepresent[0][i] != 0
             ) {
-                gameWon = true
+                winner = boardRepresent[0][i]
             }
 
             i++
@@ -161,54 +158,89 @@ class MainActivity : AppCompatActivity() {
             boardRepresent[0][0] == boardRepresent[2][2] &&
             boardRepresent[0][0] != 0
         ) {
-            gameWon = true
+            winner = boardRepresent[0][0]
         }
         // Check right-to-left diagonal
         if (boardRepresent[0][2] == boardRepresent[1][1] &&
             boardRepresent[0][2] == boardRepresent[2][0] &&
             boardRepresent[0][2] != 0
         ) {
-            gameWon = true
+            winner = boardRepresent[0][2]
         }
 
-        if (gameWon && playerOneTurn){
-            winStatus = 1
-        } else if (gameWon && !playerOneTurn){
-            winStatus = -1
-        } else if (!gameWon && round == 9){
-            winStatus = 0
+        if (winner == 1){
+            winStatus = 1.0
+        } else if (winner == 2){
+            winStatus = -1.0
+        } else if (openSpacesCount == 0){
+            winStatus = 0.0
         }
-
         return winStatus
     }
 
-    private fun minimax(boardRep: Array<Array<Int>>, depth: Int, maximizingPlayer: Boolean): Int{
+    private fun postMoveActions(): Double?{
+        var winStatus: Double? = checkForWin()
+        if (winStatus == null) {
+            if (playerOneTurn) {
+                textViewPlayer1.setTextColor(Color.BLACK)
+                textViewPlayer2.setTextColor(Color.CYAN)
+            } else {
+                textViewPlayer1.setTextColor(Color.GREEN)
+                textViewPlayer2.setTextColor(Color.BLACK)
+            }
+
+        } else if (winStatus == 1.0) {
+            playerOnePoints++
+            Toast.makeText(this, "PLAYER ONE WINS!", Toast.LENGTH_SHORT).show()
+            updatePointsText()
+            disableTiles()
+        } else if (winStatus == -1.0) {
+            playerTwoPoints++
+            Toast.makeText(this, "PLAYER TWO WINS!", Toast.LENGTH_SHORT).show()
+            updatePointsText()
+            disableTiles()
+        } else if (winStatus == 0.0) {
+            Toast.makeText(this, "DRAW...", Toast.LENGTH_SHORT).show()
+            disableTiles()
+        }
+        return winStatus
+    }
+
+
+    private fun minimax(boardRep: Array<Array<Int>>, depth: Int, maximizingPlayer: Boolean): Double{
         var winStatus = checkForWin()
-        if (winStatus != null){
+        if (winStatus != null) {
+            if (winStatus == 0.0){
+            }
             return winStatus
-        } else if (maximizingPlayer){
-            var bestScore = Int.MIN_VALUE
+        }
+        if (maximizingPlayer){
+            var bestScore = Double.NEGATIVE_INFINITY
             for (i in 0..2){
                 for (j in 0..2){
                     if (boardRep[i][j] == 0){
                         boardRep[i][j] = 1
                         var score = minimax(boardRep, depth+1, false)
                         boardRep[i][j] = 0
-                        bestScore = Math.max(score, bestScore)
+                        if (score > bestScore){
+                            bestScore = score
+                        }
                     }
                 }
             }
             return bestScore
         } else {
             // AI is the minimizing player
-            var bestScore = Int.MAX_VALUE
+            var bestScore = Double.POSITIVE_INFINITY
             for (i in 0..2){
                 for (j in 0..2){
                     if (boardRep[i][j] == 0){
                         boardRep[i][j] = 2
                         var score = minimax(boardRep, depth+1, true)
                         boardRep[i][j] = 0
-                        bestScore = Math.min(score, bestScore)
+                        if (score < bestScore){
+                            bestScore = score
+                        }
                     }
                 }
             }
@@ -217,15 +249,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun aiMove(){
-        var bestScore = Int.MAX_VALUE
+        var bestScore = Double.POSITIVE_INFINITY
         var bestMove: IntArray = intArrayOf(0, 0)
-        var copyBoardRep = boardRepresent.copyOf()
         for (i in 0..2){
             for (j in 0..2){
-                if (copyBoardRep[i][j] == 0){
-                    copyBoardRep[i][j] = 2
-                    var score = minimax(copyBoardRep, 0, true)
-                    copyBoardRep[i][j] = 0
+                if (boardRepresent[i][j] == 0){
+                    boardRepresent[i][j] = 2
+                    var score = minimax(boardRepresent, 0, true)
+
+                    boardRepresent[i][j] = 0
                     if (score < bestScore){
                         bestScore = score
                         bestMove[0] = i
@@ -258,7 +290,7 @@ class MainActivity : AppCompatActivity() {
 
         button?.text = "O"
         button?.setBackgroundColor(Color.CYAN)
-
+        button?.isEnabled = false
 
     }
 
