@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         generateBoardRep()
     }
 
+
     /* Generate a two-dimensional array that represents the game board; elements are initialized as
      * zeros to represent empty spaces.
      */
@@ -60,6 +61,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     // Reset board representation (to all zeros) after completion of round/game
     private fun resetBoardRep(){
         for (i in 0..2){
@@ -68,6 +70,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 
     /* Executes each time one of the empty spaces (spaces on game board are implemented as buttons)
      * is clicked by the user during their turn.
@@ -122,6 +125,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
 
     /* Function checks for all possible winning patterns and returns a value of 1 or -1 to indicate
      * the winning player (Player One and PLayer Two, respectively). If a draw has occurred (all
@@ -191,6 +195,7 @@ class MainActivity : AppCompatActivity() {
         return winStatus
     }
 
+
     /* Function carries out the actions required after the game space is checked for a win/draw.
      * If the game has not yet finished (no win or draw), then the colors of the player text views
      * (displaying "Player #" and score) are changed to indicate which player's turn it is.
@@ -198,7 +203,11 @@ class MainActivity : AppCompatActivity() {
      * player points are updated, and the buttons representing board spaces are disabled.
      */
     private fun postMoveActions(): Int?{
+        // Check the status of the game using the checkForWin() function
         var winStatus: Int? = checkForWin()
+        /* If the game has not ended, change the color of the player text views to indicate which
+         * player's turn it is
+         */
         if (winStatus == null) {
             if (playerOneTurn) {
                 textViewPlayer1.setTextColor(Color.BLACK)
@@ -207,7 +216,9 @@ class MainActivity : AppCompatActivity() {
                 textViewPlayer1.setTextColor(Color.GREEN)
                 textViewPlayer2.setTextColor(Color.BLACK)
             }
-
+        /* If a player has won, show a Toast message declaring the winner, update the tally of points, and
+         * disable all game tiles (spaces) so that they cannot be altered
+         */
         } else if (winStatus == 1) {
             playerOnePoints++
             Toast.makeText(this, "PLAYER ONE WINS!", Toast.LENGTH_SHORT).show()
@@ -218,6 +229,9 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "PLAYER TWO WINS!", Toast.LENGTH_SHORT).show()
             updatePointsText()
             disableTiles()
+        /* If there is a draw, show a Toast message declaring such and disable all game tiles (spaces)
+         * so that they cannot be altered
+         */
         } else if (winStatus == 0) {
             Toast.makeText(this, "DRAW...", Toast.LENGTH_SHORT).show()
             disableTiles()
@@ -317,9 +331,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    /* Function uses the minimax() function to select the optimal move, then executes that optimal
+     * move, carrying out the move of the AI player
+     */
     private fun aiMove(){
         var bestScore = Int.MAX_VALUE
         var bestMove: IntArray = intArrayOf(0, 0)
+        /* Call the minimax() function for all open spaces and find the one that returns the optimal
+         * (smallest) value - this minimum value represents the best possible move given the board's
+         * current configuration
+         */
         for (i in 0..2){
             for (j in 0..2){
                 if (boardRepresention[i][j] == 0){
@@ -334,8 +356,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        // Indicate the selected spot in the boardRepresentation array
         boardRepresention[bestMove[0]][bestMove[1]] = 2
         var button: Button? = null
+        // Find the button that corresponds to the selected space
         if (bestMove[0] == 0 && bestMove[1] == 0){
             button = findViewById(R.id.button0)
         } else if (bestMove[0] == 0 && bestMove[1] == 1) {
@@ -356,6 +380,7 @@ class MainActivity : AppCompatActivity() {
             button = findViewById(R.id.button8)
         }
 
+        // Set button text and color to indicate Player2 has claimed that space and disable button
         button?.text = "O"
         button?.setBackgroundColor(Color.CYAN)
         button?.isEnabled = false
@@ -363,6 +388,9 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    /* Function updates Player1 and Player2 text views to display correct point values after a game
+     * has ended
+     */
     @SuppressLint("SetTextI18n")
     private fun updatePointsText() {
         textViewPlayer1.text = "Player 1: $playerOnePoints"
@@ -370,10 +398,9 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    // Function disables all game tile buttons so that they cannot be altered after a game has ended
     private fun disableTiles(){
-
         val tableLayout = findViewById<TableLayout>(R.id.tableLayout)
-
         // Iterate through buttons and disable all
         for (i in 0..2) {
             val row: TableRow = tableLayout.getChildAt(i) as TableRow
@@ -387,9 +414,11 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    /* Function resets all game tile buttons after the current game has ended - button text and
+     * color are reset to an empty String and the default button color, and all buttons are enabled
+     */
     private fun resetBoard() {
         val tableLayout = findViewById<TableLayout>(R.id.tableLayout)
-
         // Reset UI - Change text to empty strings, reset colors, and enable buttons
         for (i in 0..2) {
             val row: TableRow = tableLayout.getChildAt(i) as TableRow
@@ -401,38 +430,38 @@ class MainActivity : AppCompatActivity() {
                 button.isEnabled = true
             }
         }
-
         // Reset 2D array representing board (boardRepresent)
         resetBoardRep()
-
         playerOneTurn = true
-
         // Reset textViewP2's color to black
         textViewPlayer2.setTextColor(Color.BLACK)
-
         // Color textViewP1 to indicate current turn
         textViewPlayer1.setTextColor(Color.GREEN)
-
         round = 0
 
     }
 
 
+    /* Function only resets game board; Player1 and Player2 text views (which display their points)
+     * are NOT reset (as they are in the below resetGame() function).
+     *
+     * This function is called at the start of a new round.
+     */
     fun setUpNextRound(view: View){
-
         resetBoard()
-
     }
 
 
+    /* Function resets game board and Player1 and Player2 text views (which display players' points)
+     * are reset to zero.
+     *
+     * This function is called at the start of a new game.
+     */
     fun resetGame(view: View){
-
         playerOnePoints = 0
         playerTwoPoints = 0
         updatePointsText()
-
         resetBoard()
-
     }
 
 
