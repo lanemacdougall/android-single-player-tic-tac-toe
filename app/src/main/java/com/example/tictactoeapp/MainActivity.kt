@@ -20,9 +20,6 @@ class MainActivity : AppCompatActivity() {
 
     private var playerOneTurn = true
 
-    // Maximum number of rounds = 9
-    private var round = 0
-
     private var playerOnePoints = 0
     private var playerTwoPoints = 0
 
@@ -108,18 +105,14 @@ class MainActivity : AppCompatActivity() {
             val xCoord = cellID[0]
             val yCoord = cellID[1]
             boardRepresention[xCoord][yCoord] = 1
-            // Increment round count before checking if game has been won
-            // TODO: Is round count even necessary anymore????
-            round++
             /* If the game is over (by win or draw), the postMoveActions() function will announce
              * the winner (with a Toast), disable buttons, and update points. Otherwise, it will
              * return null, indicating that the AI should take its turn.
              */
             var gameStatus = postMoveActions()
-            if (gameStatus == null && round < 9) {
+            if (gameStatus == null) {
                 playerOneTurn = false
                 aiMove()
-                round++
                 gameStatus = postMoveActions()
                 if (gameStatus == null) { playerOneTurn = true }
             }
@@ -185,12 +178,16 @@ class MainActivity : AppCompatActivity() {
             winner = boardRepresention[0][2]
         }
 
-        if (winner == 1){
-            winStatus = 1
-        } else if (winner == 2){
-            winStatus = -1
-        } else if (openSpacesCount == 0){
-            winStatus = 0
+        when {
+            winner == 1 -> {
+                winStatus = 1
+            }
+            winner == 2 -> {
+                winStatus = -1
+            }
+            openSpacesCount == 0 -> {
+                winStatus = 0
+            }
         }
         return winStatus
     }
@@ -437,7 +434,6 @@ class MainActivity : AppCompatActivity() {
         textViewPlayer2.setTextColor(Color.BLACK)
         // Color textViewP1 to indicate current turn
         textViewPlayer1.setTextColor(Color.GREEN)
-        round = 0
 
     }
 
