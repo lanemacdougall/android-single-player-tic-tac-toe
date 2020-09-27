@@ -281,13 +281,20 @@ class MainActivity : AppCompatActivity() {
      * The AI plays every possible game starting from a given configuration and only plays the
      * moves that it knows will lead to a win, or at worst, a draw.
      **/
-    private fun minimax(boardRep: Array<Array<Int>>, depth: Int, maximizingPlayer: Boolean): Int {
+    private fun minimax(boardRep: Array<Array<Int>>, depth: Int, maximizingPlayer: Boolean): Pair<Int, Int> {
         var winStatus = checkForWin()
 
         // Base case - evaluated game has ended
         if (winStatus != null) {
-            return winStatus
+            return Pair(winStatus, depth)
         }
+        /* Variable used to keep track of the least number of moves necessary to achieve an optimal
+         * outcome
+         *
+         * Used to decide between moves that have equal outcomes - i.e., if multiple moves will lead
+         * to a win, select the one that requires the least number of moves
+         */
+        var leastMoves = Int.MAX_VALUE
         if (maximizingPlayer){
             var bestScore = Int.MIN_VALUE
             // Evaluate all possible games for every empty space on the game board
@@ -297,15 +304,18 @@ class MainActivity : AppCompatActivity() {
                         boardRep[i][j] = 1
                         // Notice that maximizingPlayer value is switched to false - representing
                         // a change in turns for the game being evaluated
-                        var score = minimax(boardRep, depth+1, false)
+                        var (score, numMoves) = minimax(boardRep, depth+1, false)
                         boardRep[i][j] = 0
                         if (score > bestScore){
                             bestScore = score
+                            leastMoves = numMoves
+                        } else if (score == bestScore && numMoves < leastMoves){
+                            leastMoves = numMoves
                         }
                     }
                 }
             }
-            return bestScore
+            return Pair(bestScore, leastMoves)
         } else {
             // AI is the minimizing player
             var bestScore = Int.MAX_VALUE
@@ -316,15 +326,18 @@ class MainActivity : AppCompatActivity() {
                         boardRep[i][j] = 2
                         // Notice that maximizingPlayer value is switched to false - representing
                         // a change in turns for the game being evaluated
-                        var score = minimax(boardRep, depth+1, true)
+                        var (score, numMoves) = minimax(boardRep, depth+1, true)
                         boardRep[i][j] = 0
                         if (score < bestScore){
                             bestScore = score
+                            leastMoves = numMoves
+                        } else if (score == bestScore && numMoves < leastMoves){
+                            leastMoves = numMoves
                         }
                     }
                 }
             }
-            return bestScore
+            return Pair(bestScore, leastMoves)
         }
     }
 
@@ -334,6 +347,7 @@ class MainActivity : AppCompatActivity() {
      */
     private fun aiMove(){
         var bestScore = Int.MAX_VALUE
+        var leastMoves = Int.MAX_VALUE
         var bestMove: IntArray = intArrayOf(0, 0)
         /* Call the minimax() function for all open spaces and find the one that returns the optimal
          * (smallest) value - this minimum value represents the best possible move given the board's
@@ -343,10 +357,15 @@ class MainActivity : AppCompatActivity() {
             for (j in 0..2){
                 if (boardRepresention[i][j] == 0){
                     boardRepresention[i][j] = 2
-                    var score = minimax(boardRepresention, 0, true)
+                    var (score, numMoves) = minimax(boardRepresention, 0, true)
                     boardRepresention[i][j] = 0
                     if (score < bestScore){
                         bestScore = score
+                        leastMoves = numMoves
+                        bestMove[0] = i
+                        bestMove[1] = j
+                    } else if (score == bestScore && numMoves < leastMoves){
+                        leastMoves = numMoves
                         bestMove[0] = i
                         bestMove[1] = j
                     }
